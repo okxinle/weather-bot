@@ -1,22 +1,46 @@
 name: Weather Alert
 on:
   schedule:
-    - cron: '0 14 * * 1-5' # 10 PM SGT, Weekdays only
-  workflow_dispatch: # This allows you to click a button to run it manually
+    - cron: '0 23 * * 0-4'   # 7:00 AM SGT, Mon–Fri (morning check)
+    - cron: '30 10 * * 0-4'  # 6:30 PM SGT, Mon–Fri (evening check)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'morning or evening'
+        required: false
+        default: 'morning'
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install dependencies
         run: pip install requests
+
+      - name: Determine mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            HOUR=$(date -u +%H)
+            MINUTE=$(date -u +%M)
+            if [ "$HOUR" = "10" ]; then
+              echo "mode=evening" >> $GITHUB_OUTPUT
+            else
+              echo "mode=morning" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "mode=${{ github.event.inputs.mode || 'morning' }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run Script
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python weather_bot.py
+        run: python weather_bot.py ${{ steps.mode.outputs.mode }}
