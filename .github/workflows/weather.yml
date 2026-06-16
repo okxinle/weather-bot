@@ -1,8 +1,8 @@
 name: Weather Alert
 on:
   schedule:
-    - cron: '0 23 * * 0-4'   # 7:00 AM SGT, Mon–Fri (morning check)
-    - cron: '30 10 * * 0-4'  # 6:30 PM SGT, Mon–Fri (evening check)
+    - cron: '0 23 * * 0-4'   # 7:00 AM SGT Mon–Fri  → morning check
+    - cron: '30 10 * * 0-4'  # 6:30 PM SGT Mon–Fri  → evening check
   workflow_dispatch:
     inputs:
       mode:
@@ -29,7 +29,6 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             HOUR=$(date -u +%H)
-            MINUTE=$(date -u +%M)
             if [ "$HOUR" = "10" ]; then
               echo "mode=evening" >> $GITHUB_OUTPUT
             else
